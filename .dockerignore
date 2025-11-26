@@ -1,0 +1,8 @@
+node_modules/
+*.o
+*.exe
+*.tab.c
+*.tab.h
+lex.yy.c
+temp_*
+.env

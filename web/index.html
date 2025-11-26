@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangla Compiler - Online IDE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel - Code Editor -->
+        <div class="editor-panel" id="editorPanel">
+            <div class="panel-header">
+                <div class="header-left">
+                    <span class="icon">📄</span>
+                    <span class="title">Code Editor</span>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" id="runBtn">
+                        <span class="icon">▶</span> Run Code
+                    </button>
+                    <button class="btn btn-secondary" id="examplesBtn">
+                        <span class="icon">📚</span> Examples
+                    </button>
+                    <button class="btn btn-secondary" id="clearBtn">
+                        <span class="icon">🗑</span> Clear
+                    </button>
+                </div>
+            </div>
+            <div class="editor-content">
+                <textarea id="codeEditor" spellcheck="false">শুরু
+    // Variable declarations
+    পূর্ণ x = 10, y = 20;
+    ভগ্ন pi = 3.14159;
+    
+    // Input/Output
+    নাও >> x;
+    যদি (x < y && x != 0) {
+        দেখাও << "x is less than y and not zero\n";
+    } নাহলে যদি (x == y) {
+        দেখাও << "x equals y\n";
+    } নাহলে {
+        দেখাও << "x is greater than y\n";
+    }
+    দেখাও << "ekahnei sesh " << y << "\n";
+শেষ</textarea>
+            </div>
+        </div>
+
+        <!-- Resize Handle -->
+        <div class="resize-handle" id="resizeHandle"></div>
+
+        <!-- Right Panel - Input/Output -->
+        <div class="output-panel">
+            <!-- Top Spacer for alignment -->
+            <div class="top-spacer"></div>
+            
+            <!-- Input Section -->
+            <div class="input-section" id="inputSection">
+                <div class="panel-header">
+                    <div class="header-left">
+                        <span class="icon">⌨️</span>
+                        <span class="title">Input</span>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-sm btn-secondary" id="clearInputBtn">Clear</button>
+                    </div>
+                </div>
+                <div class="input-content">
+                    <textarea id="inputArea" placeholder="Enter input here (one value per line)...">324</textarea>
+                </div>
+            </div>
+
+            <!-- Vertical Resize Handle -->
+            <div class="resize-handle-vertical" id="resizeHandleVertical"></div>
+
+            <!-- Output Section -->
+            <div class="output-section" id="outputSection">
+                <div class="panel-header">
+                    <div class="header-left">
+                        <span class="icon">📤</span>
+                        <span class="title">Output</span>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-sm btn-secondary" id="clearOutputBtn">Clear</button>
+                    </div>
+                </div>
+                <div class="output-content">
+                    <pre id="outputArea"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Examples Modal -->
+    <div class="modal" id="examplesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Example Programs</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="example-list">
+                    <button class="example-item" data-example="hello">
+                        <h3>Hello World</h3>
+                        <p>Simple string output example</p>
+                    </button>
+                    <button class="example-item" data-example="calculator">
+                        <h3>Calculator</h3>
+                        <p>Basic arithmetic operations</p>
+                    </button>
+                    <button class="example-item" data-example="factorial">
+                        <h3>Factorial</h3>
+                        <p>Calculate factorial using while loop</p>
+                    </button>
+                    <button class="example-item" data-example="ifelse">
+                        <h3>If-Else Demo</h3>
+                        <p>Conditional statements example</p>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Compiling and running...</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
