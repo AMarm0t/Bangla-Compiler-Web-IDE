@@ -7,9 +7,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Mobile Tabs -->
+    <div class="mobile-tabs">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="code">
+                <span class="icon">📝</span> Code
+            </button>
+            <button class="tab-btn" data-tab="io">
+                <span class="icon">⌨️</span> Input/Output
+            </button>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Left Panel - Code Editor -->
-        <div class="editor-panel" id="editorPanel">
+        <div class="editor-panel active" id="editorPanel">
             <div class="panel-header">
                 <div class="header-left">
                     <span class="icon">📄</span>
@@ -29,20 +41,20 @@
             </div>
             <div class="editor-content">
                 <textarea id="codeEditor" spellcheck="false">শুরু
-    // Variable declarations
-    পূর্ণ x = 10, y = 20;
-    ভগ্ন pi = 3.14159;
+    // ভেরিয়েবল ঘোষণা
+    পূর্ণ ক = 10, খ = 20;
+    ভগ্ন পাই = 3.14159;
     
-    // Input/Output
-    নাও >> x;
-    যদি (x < y && x != 0) {
-        দেখাও << "x is less than y and not zero\n";
-    } নাহলে যদি (x == y) {
-        দেখাও << "x equals y\n";
+    // ইনপুট/আউটপুট
+    নাও >> ক;
+    যদি (ক < খ && ক != 0) {
+        দেখাও << "ক এর মান খ থেকে ছোট এবং শূন্য নয়" << নতুনলাইন;
+    } নাহলে যদি (ক == খ) {
+        দেখাও << "ক সমান খ" << নতুনলাইন;
     } নাহলে {
-        দেখাও << "x is greater than y\n";
+        দেখাও << "ক এর মান খ থেকে বড়" << নতুনলাইন;
     }
-    দেখাও << "ekahnei sesh " << y << "\n";
+    দেখাও << "এখানেই শেষ " << খ << নতুনলাইন;
 শেষ</textarea>
             </div>
         </div>
@@ -52,6 +64,13 @@
 
         <!-- Right Panel - Input/Output -->
         <div class="output-panel">
+            <!-- Mobile Run Button -->
+            <div class="mobile-run-header">
+                <button class="btn btn-primary" id="runBtnMobile">
+                    <span class="icon">▶</span> Run Code
+                </button>
+            </div>
+            
             <!-- Top Spacer for alignment -->
             <div class="top-spacer"></div>
             
@@ -67,7 +86,7 @@
                     </div>
                 </div>
                 <div class="input-content">
-                    <textarea id="inputArea" placeholder="Enter input here (one value per line)...">324</textarea>
+                    <textarea id="inputArea" placeholder="এখানে ইনপুট লিখুন (প্রতি লাইনে একটি মান)...">10</textarea>
                 </div>
             </div>
 

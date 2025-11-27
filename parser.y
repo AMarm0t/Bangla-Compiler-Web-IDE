@@ -10,6 +10,51 @@ extern FILE *yyin;
 
 void yyerror(const char *s);
 
+// Function to convert Bangla digits to English in input
+char* convert_bangla_input(const char* str) {
+    char* result = strdup(str);
+    for (int i = 0; result[i] != '\0'; i++) {
+        if ((unsigned char)result[i] == 0xE0 && 
+            (unsigned char)result[i+1] == 0xA7 && 
+            (unsigned char)result[i+2] >= 0xA6 && 
+            (unsigned char)result[i+2] <= 0xAF) {
+            char digit = '0' + ((unsigned char)result[i+2] - 0xA6);
+            result[i] = digit;
+            memmove(&result[i+1], &result[i+3], strlen(&result[i+3]) + 1);
+        }
+    }
+    return result;
+}
+
+// Function to convert English digits to Bangla for output
+void print_bangla_number(int num) {
+    char str[100];
+    sprintf(str, "%d", num);
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] >= '0' && str[i] <= '9') {
+            // Convert English digit to Bangla
+            // ০=E0A7A6, ১=E0A7A7, etc.
+            unsigned char bangla[4] = {0xE0, 0xA7, 0xA6 + (str[i] - '0'), 0};
+            printf("%s", bangla);
+        } else {
+            printf("%c", str[i]);
+        }
+    }
+}
+
+void print_bangla_float(double num) {
+    char str[100];
+    sprintf(str, "%g", num);
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] >= '0' && str[i] <= '9') {
+            unsigned char bangla[4] = {0xE0, 0xA7, 0xA6 + (str[i] - '0'), 0};
+            printf("%s", bangla);
+        } else {
+            printf("%c", str[i]);
+        }
+    }
+}
+
 /* AST Node Types */
 typedef enum {
     NODE_PROGRAM,
@@ -871,13 +916,17 @@ void executeStatement(ASTNode *node) {
                 } else {
                     var = findVar(node->data.input.names[i]);
                     if (var->type == 0) {
-                        int ival;
-                        scanf("%d", &ival);
-                        var->value.ival = ival;
+                        char input_buffer[1000];
+                        scanf("%s", input_buffer);
+                        char* converted = convert_bangla_input(input_buffer);
+                        var->value.ival = atoi(converted);
+                        free(converted);
                     } else if (var->type == 1) {
-                        double fval;
-                        scanf("%lf", &fval);
-                        var->value.fval = fval;
+                        char input_buffer[1000];
+                        scanf("%s", input_buffer);
+                        char* converted = convert_bangla_input(input_buffer);
+                        var->value.fval = atof(converted);
+                        free(converted);
                     } else {
                         char buffer[1000];
                         scanf("%s", buffer);
@@ -908,15 +957,15 @@ void executeStatement(ASTNode *node) {
                             } else {
                                 var = findVar(name);
                                 if (var->type == 0) {
-                                    printf("%d", var->value.ival);
+                                    print_bangla_number(var->value.ival);
                                 } else if (var->type == 1) {
-                                    printf("%g", var->value.fval);
+                                    print_bangla_float(var->value.fval);
                                 } else {
                                     printf("%s", var->value.sval);
                                 }
                             }
                         } else {
-                            printf("%g", evaluateExpr(expr));
+                            print_bangla_float(evaluateExpr(expr));
                         }
                     }
                 }

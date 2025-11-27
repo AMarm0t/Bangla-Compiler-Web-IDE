@@ -3,6 +3,7 @@ const codeEditor = document.getElementById('codeEditor');
 const inputArea = document.getElementById('inputArea');
 const outputArea = document.getElementById('outputArea');
 const runBtn = document.getElementById('runBtn');
+const runBtnMobile = document.getElementById('runBtnMobile');
 const examplesBtn = document.getElementById('examplesBtn');
 const clearBtn = document.getElementById('clearBtn');
 const clearInputBtn = document.getElementById('clearInputBtn');
@@ -14,52 +15,76 @@ const resizeHandle = document.getElementById('resizeHandle');
 const resizeHandleVertical = document.getElementById('resizeHandleVertical');
 const editorPanel = document.getElementById('editorPanel');
 const inputSection = document.getElementById('inputSection');
+const outputPanel = document.querySelector('.output-panel');
+
+// Mobile tab elements
+const tabButtons = document.querySelectorAll('.tab-btn');
+
+// Mobile Tab Switching
+tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        
+        // Update active tab button
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Show corresponding panel
+        if (tab === 'code') {
+            editorPanel.classList.add('active');
+            outputPanel.classList.remove('active');
+        } else {
+            editorPanel.classList.remove('active');
+            outputPanel.classList.add('active');
+        }
+    });
+});
 
 // Example Programs
 const examples = {
     hello: `শুরু
-    শব্দ message = "হ্যালো, বাংলা কম্পাইলার!";
-    দেখাও << message << "\\n";
+    শব্দ বার্তা = "হ্যালো, বাংলা কম্পাইলার!";
+    দেখাও << বার্তা << নতুনলাইন;
 শেষ`,
     
     calculator: `শুরু
-    পূর্ণ a, b;
-    দেখাও << "Enter two numbers: ";
-    নাও >> a >> b;
+    পূর্ণ ক, খ;
+    দেখাও << "দুটি সংখ্যা লিখুন: ";
+    নাও >> ক >> খ;
     
-    দেখাও << "Sum: " << (a + b) << "\\n";
-    দেখাও << "Difference: " << (a - b) << "\\n";
-    দেখাও << "Product: " << (a * b) << "\\n";
-    দেখাও << "Division: " << (a / b) << "\\n";
+    দেখাও << "যোগফল: " << (ক + খ) << নতুনলাইন;
+    দেখাও << "বিয়োগফল: " << (ক - খ) << নতুনলাইন;
+    দেখাও << "গুণফল: " << (ক * খ) << নতুনলাইন;
+    দেখাও << "ভাগফল: " << (ক / খ) << নতুনলাইন;
 শেষ`,
     
     factorial: `শুরু
-    পূর্ণ n, fact = 1, i = 1;
-    দেখাও << "Enter a number: ";
-    নাও >> n;
+    পূর্ণ সংখ্যা, ফ্যাক্ট = 1, আই = 1;
+    দেখাও << "একটি সংখ্যা লিখুন: ";
+    নাও >> সংখ্যা;
     
-    যতক্ষণ (i <= n) {
-        fact = fact * i;
-        i++;
+    যতক্ষণ (আই <= সংখ্যা) {
+        ফ্যাক্ট = ফ্যাক্ট * আই;
+        আই++;
     }
     
-    দেখাও << "Factorial of " << n << " is " << fact << "\\n";
+    দেখাও << সংখ্যা << " এর ফ্যাক্টরিয়াল হল " << ফ্যাক্ট << নতুনলাইন;
 শেষ`,
     
     ifelse: `শুরু
-    পূর্ণ x, y = 50;
-    দেখাও << "Enter a number: ";
-    নাও >> x;
+    পূর্ণ ক, খ = 50;
+    দেখাও << "একটি সংখ্যা লিখুন: ";
+    নাও >> ক;
     
-    যদি (x < y && x != 0) {
-        দেখাও << "x is less than y and not zero\\n";
-    } নাহলে যদি (x == y) {
-        দেখাও << "x equals y\\n";
+    যদি (ক < খ && ক != 0) {
+        দেখাও << "ক এর মান খ থেকে ছোট এবং শূন্য নয়" << নতুনলাইন;
+    } নাহলে যদি (ক == খ) {
+        দেখাও << "ক সমান খ" << নতুনলাইন;
     } নাহলে {
-        দেখাও << "x is greater than y\\n";
+        দেখাও << "ক এর মান খ থেকে বড়" << নতুনলাইন;
     }
     
-    দেখাও << "You entered: " << x << "\\n";
+    দেখাও << "আপনি লিখেছেন: " << ক << নতুনলাইন;
 শেষ`
 };
 
@@ -167,6 +192,46 @@ runBtn.addEventListener('click', async () => {
         }
     } catch (error) {
         outputArea.textContent = 'Error: Failed to connect to server\n' + error.message;
+        outputArea.className = 'output-error';
+    } finally {
+        loadingOverlay.classList.remove('active');
+    }
+});
+
+// Mobile Run Button (same functionality)
+runBtnMobile.addEventListener('click', async () => {
+    const code = codeEditor.value;
+    const input = inputArea.value;
+    
+    if (!code.trim()) {
+        outputArea.textContent = 'Error: No code to run!';
+        outputArea.className = 'output-error';
+        return;
+    }
+    
+    loadingOverlay.classList.add('active');
+    outputArea.textContent = '';
+    
+    try {
+        const response = await fetch('/api/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code, input })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            outputArea.textContent = result.output || '(No output)';
+            outputArea.className = 'output-success';
+        } else {
+            outputArea.textContent = result.error || 'Unknown error occurred';
+            outputArea.className = 'output-error';
+        }
+    } catch (error) {
+        outputArea.textContent = `Error: ${error.message}`;
         outputArea.className = 'output-error';
     } finally {
         loadingOverlay.classList.remove('active');
