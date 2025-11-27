@@ -1,137 +1,550 @@
-# Bangla Compiler - Web IDE
+# Bangla Compiler - Web IDE 🇧🇩
 
-A web-based IDE for a Bangla programming language compiler built with Flex, Bison, and Node.js.
+A complete programming language compiler with **native Bangla keywords**, built with Flex, Bison, and Node.js. Write code entirely in Bengali with full UTF-8 support for variable names, strings, and all language constructs.
 
 ![Bangla Compiler](https://img.shields.io/badge/Language-Bangla-green.svg)
 ![Built With](https://img.shields.io/badge/Built%20With-Flex%20%26%20Bison-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success.svg)
 
-## Features
+## ✨ Features
 
-- **Bangla Keywords**: Write code using Bangla keywords (শুরু, শেষ, যদি, নাহলে, etc.)
-- **Web-Based IDE**: Modern VS Code-style dark theme interface
-- **Real-time Compilation**: Compile and run code directly in your browser
-- **Interactive Input/Output**: Separate panels for input and output
-- **Resizable Panels**: Customize your workspace layout
-- **Example Programs**: Built-in examples to get started
+### Language Features
+- **🔤 Native Bangla Keywords**: Complete programming syntax in Bengali (শুরু, শেষ, যদি, যতক্ষণ, ফোর, etc.)
+- **🌐 Full UTF-8 Support**: Use Bangla variable names - single character (ন, ক, ই) or multi-character (সংখ্যা, গণনা, যোগফল)
+- **📊 Data Types**: Integers (পূর্ণ), Floats (ভগ্ন), Strings (শব্দ) with full Bangla text support
+- **📚 Arrays**: First-class array support for all types (পূর্ণ[], ভগ্ন[], শব্দ[])
+- **🔄 Control Flow**: If-else conditionals, while loops (যতক্ষণ), for loops (ফোর)
+- **🧮 Operators**: Arithmetic (+, -, *, /), Comparison (==, !=, <, >, <=, >=), Logical (&&, ||)
+- **⚡ Compound Operations**: +=, -=, *=, /=, ++, --
+- **🔢 Negative Numbers**: Full support for negative integers and floats
+- **📥 Array Input**: Dynamic array input with `নাও >> arr[i]` syntax in loops
+- **📤 Bangla Output**: All output displays in Bengali numerals (০-৯)
 
-## Bangla Keywords
+### Web IDE Features
+- **🎨 Modern Interface**: VS Code-style dark theme with syntax highlighting
+- **⚡ Real-time Compilation**: Compile and run code instantly in your browser
+- **🔄 Interactive I/O**: Separate input and output panels with full UTF-8 support
+- **📐 Resizable Layout**: Drag-and-drop panel resizing for custom workspace
+- **📚 Example Programs**: Built-in examples (Hello World, Calculator, Factorial, Loops, Arrays, Conditionals)
+- **🌍 Cross-Platform**: Works on any modern browser - desktop, tablet, or mobile
+- **☁️ Cloud Deployment**: Deployed on Render with automatic builds from GitHub
 
-| Bangla | English | Purpose |
-|--------|---------|---------|
-| শুরু | start | Program start |
-| শেষ | end | Program end |
-| পূর্ণ | int | Integer type |
-| ভগ্ন | float | Float type |
-| শব্দ | string | String type |
-| যদি | if | If statement |
-| নাহলে | else | Else statement |
-| যতক্ষণ | while | While loop |
-| দেখাও | print | Output |
-| নাও | input | Input |
+## 📖 Language Reference
 
-## Quick Start
+### Keywords
 
-### Local Development
+| Bangla | English | Purpose | Example |
+|--------|---------|---------|---------|
+| শুরু | start | Program start | `শুরু` |
+| শেষ | end | Program end | `শেষ` |
+| পূর্ণ | int | Integer type | `পূর্ণ সংখ্যা = 10;` |
+| ভগ্ন | float | Float type | `ভগ্ন দশমিক = 3.14;` |
+| শব্দ | string | String type | `শব্দ নাম = "বাংলা";` |
+| পূর্ণ[] | int[] | Integer array | `পূর্ণ তালিকা[৫];` |
+| ভগ্ন[] | float[] | Float array | `ভগ্ন মূল্য[১০];` |
+| শব্দ[] | string[] | String array | `শব্দ নাম[৩];` |
+| যদি | if | Conditional | `যদি (x > 0) { }` |
+| নাহলে | else | Else clause | `নাহলে { }` |
+| যতক্ষণ | while | While loop | `যতক্ষণ (i < 10) { }` |
+| ফোর | for | For loop | `ফোর (i = 0; i < 5; i++;) { }` |
+| দেখাও | print | Output | `দেখাও << "হ্যালো";` |
+| নাও | input | Input | `নাও >> x;` |
+| নতুনলাইন | newline | Line break | `দেখাও << নতুনলাইন;` |
 
-**Prerequisites:**
+### Operators
+
+**Arithmetic**: `+`, `-`, `*`, `/`  
+**Comparison**: `==`, `!=`, `<`, `>`, `<=`, `>=`  
+**Logical**: `&&` (AND), `||` (OR)  
+**Compound Assignment**: `+=`, `-=`, `*=`, `/=`  
+**Increment/Decrement**: `++`, `--`  
+**Unary**: `-` (negative numbers)
+
+## 🚀 Quick Start
+
+### Prerequisites
 - Node.js (v14+)
 - GCC compiler
 - Flex (2.5+)
 - Bison (3.0+)
 
-**Installation:**
-```bash
-# Clone repository
-git clone https://github.com/YOUR_USERNAME/Compiler-Design-Project.git
-cd Compiler-Design-Project
+### Installation
 
-# Install dependencies
+```bash
+# Clone the repository
+git clone https://github.com/AMarm0t/Bangla-Compiler-Web-IDE.git
+cd Bangla-Compiler-Web-IDE
+
+# Install Node.js dependencies
 npm install
 
 # Build the compiler
-bison -d parser.y
 flex scanner.l
-gcc -o app parser.tab.c lex.yy.c -lm
+bison -d parser.y
+gcc -o app lex.yy.c parser.tab.c -lm
 
-# Start the server
+# Start the web server
 npm start
 ```
 
-Visit `http://localhost:3000` in your browser.
+Visit **http://localhost:3000** in your browser.
 
-## Deploy to Render (Free)
+### Windows Users
 
-1. **Push to GitHub:**
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
-   ```
+For proper Bangla display in terminal:
+```powershell
+chcp 65001  # Set UTF-8 code page
+.\app.exe your_code.txt
+```
 
-2. **Deploy on Render:**
-   - Go to [render.com](https://render.com) and sign up
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Render auto-detects `render.yaml` configuration
-   - Click "Create Web Service"
+## 📝 Code Examples
 
-3. **Access your app:**
-   - Your app will be live at: `https://your-app-name.onrender.com`
-   - Free tier includes 750 hours/month
-   - App sleeps after 15min inactivity (30s wake time)
-
-## Example Code
-
+### Hello World
 ```bangla
 শুরু
-    পূর্ণ x = 10, y = 20;
-    
-    নাও >> x;
-    
-    যদি (x < y) {
-        দেখাও << "x is less than y\n";
-    } নাহলে যদি (x == y) {
-        দেখাও << "x equals y\n";
-    } নাহলে {
-        দেখাও << "x is greater than y\n";
-    }
-    
-    দেখাও << "Result: " << y << "\n";
+    দেখাও << "হ্যালো বাংলা!" << নতুনলাইন;
 শেষ
 ```
 
-## Project Structure
-
-```
-.
-├── scanner.l          # Flex lexer
-├── parser.y           # Bison parser with AST
-├── server.js          # Node.js Express server
-├── web/               # Frontend files
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
-├── Dockerfile         # Docker configuration
-├── render.yaml        # Render deployment config
-├── package.json       # Node.js dependencies
-└── README.md          # This file
+### Variables with Bangla Names
+```bangla
+শুরু
+    পূর্ণ সংখ্যা = 42;
+    ভগ্ন দশমিক = 3.14159;
+    শব্দ নাম = "বাংলাদেশ";
+    
+    দেখাও << "সংখ্যা: " << সংখ্যা << নতুনলাইন;
+    দেখাও << "দশমিক: " << দশমিক << নতুনলাইন;
+    দেখাও << "নাম: " << নাম << নতুনলাইন;
+শেষ
 ```
 
-## Technology Stack
+### Input and Arithmetic
+```bangla
+শুরু
+    পূর্ণ ক, খ, যোগফল;
+    
+    দেখাও << "প্রথম সংখ্যা: ";
+    নাও >> ক;
+    
+    দেখাও << "দ্বিতীয় সংখ্যা: ";
+    নাও >> খ;
+    
+    যোগফল = ক + খ;
+    দেখাও << "যোগফল = " << যোগফল << নতুনলাইন;
+শেষ
+```
 
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Backend**: Node.js + Express
-- **Compiler**: Flex (lexer) + Bison (parser)
-- **Language**: C (compiler), JavaScript (server)
-- **Deployment**: Docker + Render
+### Conditionals
+```bangla
+শুরু
+    পূর্ণ বয়স = 20;
+    
+    যদি (বয়স >= 18) {
+        দেখাও << "প্রাপ্তবয়স্ক" << নতুনলাইন;
+    } নাহলে {
+        দেখাও << "অপ্রাপ্তবয়স্ক" << নতুনলাইন;
+    }
+শেষ
+```
 
-## License
+### While Loop
+```bangla
+শুরু
+    পূর্ণ গণনা = 1;
+    
+    যতক্ষণ (গণনা <= 5) {
+        দেখাও << "সংখ্যা: " << গণনা << নতুনলাইন;
+        গণনা++;
+    }
+শেষ
+```
+
+### For Loop
+```bangla
+শুরু
+    পূর্ণ ই;
+    
+    ফোর (ই = 1; ই <= 10; ই++;) {
+        দেখাও << ই << " ";
+    }
+    
+    দেখাও << নতুনলাইন;
+শেষ
+```
+
+### Arrays with Bangla Variables
+```bangla
+শুরু
+    পূর্ণ সংখ্যা[৫];
+    পূর্ণ ই;
+    
+    // Initialize array
+    সংখ্যা[০] = 10;
+    সংখ্যা[১] = 20;
+    সংখ্যা[২] = 30;
+    সংখ্যা[৩] = 40;
+    সংখ্যা[৪] = 50;
+    
+    // Display array
+    ফোর (ই = 0; ই < 5; ই++;) {
+        দেখাও << "সংখ্যা[" << ই << "] = " << সংখ্যা[ই] << নতুনলাইন;
+    }
+শেষ
+```
+
+### Dynamic Array Input
+```bangla
+শুরু
+    পূর্ণ আকার, ই;
+    
+    দেখাও << "অ্যারে আকার: ";
+    নাও >> আকার;
+    
+    পূর্ণ তালিকা[১০];
+    
+    দেখাও << আকার << " টি সংখ্যা দিন:" << নতুনলাইন;
+    ফোর (ই = 0; ই < আকার; ই++;) {
+        দেখাও << "উপাদান [" << ই << "]: ";
+        নাও >> তালিকা[ই];
+    }
+    
+    // Display entered values
+    দেখাও << "আপনার তালিকা:" << নতুনলাইন;
+    ফোর (ই = 0; ই < আকার; ই++;) {
+        দেখাও << তালিকা[ই] << " ";
+    }
+    দেখাও << নতুনলাইন;
+শেষ
+```
+
+### String Arrays with Bangla Text
+```bangla
+শুরু
+    শব্দ শহর[৫];
+    পূর্ণ ই;
+    
+    শহর[০] = "ঢাকা";
+    শহর[১] = "চট্টগ্রাম";
+    শহর[২] = "খুলনা";
+    শহর[৩] = "রাজশাহী";
+    শহর[৪] = "সিলেট";
+    
+    দেখাও << "বাংলাদেশের শহর:" << নতুনলাইন;
+    ফোর (ই = 0; ই < 5; ই++;) {
+        দেখাও << (ই + 1) << ". " << শহর[ই] << নতুনলাইন;
+    }
+শেষ
+```
+
+### Complex Algorithm - Binary Search
+```bangla
+শুরু
+    পূর্ণ তালিকা[১০];
+    পূর্ণ ই;
+    
+    // Initialize sorted array
+    তালিকা[০] = 5;
+    তালিকা[১] = 10;
+    তালিকা[২] = 15;
+    তালিকা[৩] = 20;
+    তালিকা[৪] = 25;
+    তালিকা[৫] = 30;
+    তালিকা[৬] = 35;
+    তালিকা[৭] = 40;
+    তালিকা[৮] = 45;
+    তালিকা[৯] = 50;
+    
+    পূর্ণ লক্ষ্য = 25;
+    পূর্ণ বাম = 0;
+    পূর্ণ ডান = 9;
+    পূর্ণ মধ্য;
+    পূর্ণ ফলাফল = -1;
+    
+    যতক্ষণ (বাম <= ডান) {
+        মধ্য = বাম + (ডান - বাম) / 2;
+        
+        যদি (তালিকা[মধ্য] == লক্ষ্য) {
+            ফলাফল = মধ্য;
+            বাম = ডান + 1;
+        } নাহলে {
+            যদি (তালিকা[মধ্য] < লক্ষ্য) {
+                বাম = মধ্য + 1;
+            } নাহলে {
+                ডান = মধ্য - 1;
+            }
+        }
+    }
+    
+    যদি (ফলাফল != -1) {
+        দেখাও << "পাওয়া গেছে: " << ফলাফল << নতুনলাইন;
+    } নাহলে {
+        দেখাও << "পাওয়া যায়নি" << নতুনলাইন;
+    }
+শেষ
+```
+
+## 🏗️ Project Structure
+
+```
+Bangla-Compiler-Web-IDE/
+├── scanner.l              # Flex lexer - tokenization with UTF-8 support
+├── parser.y               # Bison parser - grammar and AST generation
+├── compiler.h             # Compiler header - AST structures and function declarations
+├── compiler.cpp           # Compiler implementation - AST execution engine
+├── server.js              # Node.js Express server for web IDE
+├── web/                   # Frontend web interface
+│   ├── index.html         # Main IDE interface
+│   ├── style.css          # Dark theme styling
+│   └── script.js          # Client-side logic and API calls
+├── tests/                 # Comprehensive test suite (13 test files)
+│   ├── test_01_variables.txt
+│   ├── test_02_conditions.txt
+│   ├── test_03_while_loop.txt
+│   ├── test_04_for_loop.txt
+│   ├── test_05_int_arrays.txt
+│   ├── test_06_float_arrays.txt
+│   ├── test_07_string_arrays.txt
+│   ├── test_08_compound_ops.txt
+│   ├── test_09_nested.txt
+│   ├── test_10_multiple_arrays.txt
+│   ├── test_11_complex_expr.txt
+│   ├── test_12_edge_cases.txt
+│   └── test_13_binary_search.txt
+├── Dockerfile             # Docker containerization
+├── render.yaml            # Render deployment configuration
+├── package.json           # Node.js dependencies
+├── TEST_RESULTS.md        # Comprehensive test documentation
+└── README.md              # This file
+```
+
+## 🔧 Technical Implementation
+
+### Compiler Architecture
+
+**Lexical Analysis (scanner.l)**
+- UTF-8 byte sequence matching for Bangla characters
+- Support for 2-byte, 3-byte, and 4-byte UTF-8 sequences
+- Bengali-specific character ranges (০xE0[০xA6-০xA7][০x80-০xBF])
+- Bangla digit recognition (০-৯)
+- Token generation for keywords, identifiers, literals, and operators
+
+**Syntax Analysis (parser.y)**
+- Context-free grammar for Bangla programming constructs
+- Abstract Syntax Tree (AST) generation
+- Type checking and validation
+- Symbol table management
+- Support for nested scopes
+
+**Semantic Analysis & Execution (compiler.cpp)**
+- AST traversal and interpretation
+- Variable storage and retrieval
+- Type coercion (int ↔ float)
+- Array bounds checking
+- Expression evaluation with proper precedence
+- Bangla number output conversion (০-৯)
+
+### Key Technical Features
+
+**UTF-8 Support**
+```c
+// scanner.l patterns
+UTF8_2BYTE      [\xC0-\xDF][\x80-\xBF]
+UTF8_3BYTE      \xE0[\x80-\xBF][\x80-\xBF]|...
+BENGALI_CHAR    \xE0[\xA6-\xA7][\x80-\xBF]
+BANGLA_DIGIT    \xE0\xA7[\xA6-\xAF]
+
+IDENT_START     {ASCII_LETTER}|{UTF8_CHAR}
+IDENT_CONT      {ASCII_LETTER}|{ASCII_DIGIT}|{UTF8_CHAR}|{BANGLA_DIGIT}
+```
+
+**Array Input Support**
+```c
+// Grammar support for dynamic array input
+input_list:
+    RIGHT_SHIFT IDENTIFIER
+    | RIGHT_SHIFT IDENTIFIER LBRACKET expression RBRACKET
+```
+
+**Type System**
+- Type 0: পূর্ণ (int) - 32-bit signed integers
+- Type 1: ভগ্ন (float) - double precision floating point
+- Type 2: শব্দ (string) - UTF-8 encoded strings
+- Arrays: Homogeneous typed arrays for all base types
+
+## 🧪 Testing
+
+The project includes **13 comprehensive test suites** covering:
+
+✅ Variable declaration and arithmetic  
+✅ Conditional statements (if/else)  
+✅ While loops  
+✅ For loops  
+✅ Integer arrays  
+✅ Float arrays  
+✅ String arrays with Bangla text  
+✅ Compound operations (++, --, +=, etc.)  
+✅ Nested control structures  
+✅ Multiple array operations  
+✅ Complex expressions and operator precedence  
+✅ Edge cases (negatives, zero, empty strings)  
+✅ Algorithmic implementation (binary search)  
+
+**Run all tests:**
+```powershell
+chcp 65001
+.\app.exe tests\test_01_variables.txt
+.\app.exe tests\test_02_conditions.txt
+# ... (run all 13 tests)
+```
+
+See [TEST_RESULTS.md](TEST_RESULTS.md) for detailed test documentation.
+
+## 🌐 Deployment
+
+### Deploy to Render (Free Hosting)
+
+1. **Fork/Clone this repository**
+2. **Push to your GitHub account**
+3. **Go to [render.com](https://render.com) and sign up**
+4. **Create new Web Service**
+   - Connect your GitHub repository
+   - Render auto-detects `render.yaml`
+   - Click "Create Web Service"
+5. **Your app will be live** at `https://your-app-name.onrender.com`
+
+**Render Free Tier:**
+- ✅ 750 hours/month (enough for 24/7 uptime)
+- ✅ Automatic deployments from GitHub
+- ✅ Free SSL certificate
+- ⚠️ Sleeps after 15 min inactivity (30s wake time)
+
+### Docker Deployment
+
+```bash
+# Build Docker image
+docker build -t bangla-compiler .
+
+# Run container
+docker run -p 3000:3000 bangla-compiler
+```
+
+## 📚 Language Syntax Guide
+
+### Variable Declaration
+```bangla
+পূর্ণ x;           // Declare integer
+পূর্ণ y = 10;      // Declare and initialize
+ভগ্ন pi = 3.14;    // Float variable
+শব্দ name = "বাংলা"; // String variable
+```
+
+### Arrays
+```bangla
+পূর্ণ arr[10];     // Integer array
+arr[0] = 5;         // Array assignment
+দেখাও << arr[0];   // Array access
+```
+
+### Control Flow
+```bangla
+// If-else
+যদি (condition) {
+    // code
+} নাহলে যদি (condition2) {
+    // code
+} নাহলে {
+    // code
+}
+
+// While loop
+যতক্ষণ (i < 10) {
+    i++;
+}
+
+// For loop (note: semicolon after increment)
+ফোর (i = 0; i < 10; i++;) {
+    // code
+}
+```
+
+### Input/Output
+```bangla
+নাও >> variable;           // Input single value
+নাও >> x >> y >> z;        // Multiple inputs
+নাও >> arr[i];             // Array element input
+
+দেখাও << "text";           // Output text
+দেখাও << variable;         // Output variable
+দেখাও << x << " " << y;   // Multiple outputs
+দেখাও << নতুনলাইন;         // Newline
+```
+
+### Operators
+```bangla
+x = a + b;      // Addition
+x = a - b;      // Subtraction
+x = a * b;      // Multiplication
+x = a / b;      // Division
+
+x += 5;         // Compound addition
+x -= 3;         // Compound subtraction
+x *= 2;         // Compound multiplication
+x /= 4;         // Compound division
+
+x++;            // Increment
+x--;            // Decrement
+
+যদি (a == b)   // Equality
+যদি (a != b)   // Inequality
+যদি (a < b)    // Less than
+যদি (a > b)    // Greater than
+যদি (a <= b)   // Less than or equal
+যদি (a >= b)   // Greater than or equal
+
+যদি (a && b)   // Logical AND
+যদি (a || b)   // Logical OR
+```
+
+### Comments
+```bangla
+// Single line comment
+
+/* Multi-line
+   comment */
+```
+
+## ⚠️ Known Limitations
+
+- Array initialization lists `{1, 2, 3}` not supported (use manual assignment)
+- Variable declaration in for loop init not supported (declare before loop)
+- No function definitions (single main program only)
+- No include/import system
+- No pointers or references
+
+## 🤝 Contributing
+
+Contributions are welcome! To contribute:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+- Follow existing code style
+- Add tests for new features
+- Update documentation
+- Test UTF-8 handling thoroughly
+- Ensure backwards compatibility
+
+## 📄 License
 
 MIT License
 
-```
-Copyright (c) 2025 Nahid
+Copyright (c) 2025 AMarm0t
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -150,97 +563,33 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
 
-## Author
+## 👨‍💻 Author
 
-**Nahid** - Compiler Design Project
+**AMarm0t**  
+GitHub: [@AMarm0t](https://github.com/AMarm0t)  
+Repository: [Bangla-Compiler-Web-IDE](https://github.com/AMarm0t/Bangla-Compiler-Web-IDE)
 
-## Contributing
+## 🙏 Acknowledgments
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- Inspired by the need for programming education in native Bangla
+- Built with Flex and Bison - powerful tools for language implementation
+- Thanks to the open-source community for tools and libraries
+
+## 🔗 Links
+
+- **Live Demo**: [Your Render URL]
+- **GitHub Repository**: https://github.com/AMarm0t/Bangla-Compiler-Web-IDE
+- **Issue Tracker**: https://github.com/AMarm0t/Bangla-Compiler-Web-IDE/issues
+- **Test Results**: [TEST_RESULTS.md](TEST_RESULTS.md)
 
 ---
 
-⭐ If you found this project helpful, please give it a star!
+⭐ **If you find this project helpful, please give it a star!**  
+🐛 **Found a bug? Open an issue!**  
+💡 **Have an idea? Submit a pull request!**
 
-
-A sophisticated Bangla (Bengali) programming language compiler built with **Flex** and **Bison**, featuring native Bengali keywords and comprehensive programming features including expressions, control flow, loops, and I/O operations.
-
-[![Language](https://img.shields.io/badge/Language-Bangla-green.svg)](https://bn.wikipedia.org/wiki/বাংলা_ভাষা)
-[![Built With](https://img.shields.io/badge/Built%20With-Flex%20%26%20Bison-blue.svg)](https://www.gnu.org/software/bison/)
-[![Compiler](https://img.shields.io/badge/Compiler-GCC-green.svg)](https://gcc.gnu.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-success.svg)](https://github.com/Hamza-28/Compiler-Design-Project)
-
-## 📋 Table of Contents
-- [Features](#-features)
-- [Keywords](#-keywords-and-their-meanings)
-- [Installation Guide](#-installation-guide)
-- [Usage Instructions](#-usage-instructions)
-- [Language Reference](#-complete-language-reference)
-- [Code Examples](#-code-examples)
-- [Technical Implementation](#-technical-implementation)
-- [Build Instructions](#-build-instructions)
-- [FAQ](#-faq)
-
-## ✨ Features
-
-### 🔧 Core Language Features
-- **🔤 Native Bangla Keywords**: Program entirely in Bengali (শুরু, শেষ, পূর্ণ, ভগ্ন, etc.)
-- **📊 Multiple Data Types**: Integers (পূর্ণ), Floats (ভগ্ন), Strings (শব্দ)
-- **🔢 Variable Management**: Declaration, initialization, assignment, and scope handling
-- **🧮 Arithmetic Operations**: Full support for `+`, `-`, `*`, `/`, `+=`, `-=`, `*=`, `/=`, `++`, `--`
-- **🔍 Comparison Operators**: `<`, `>`, `<=`, `>=`, `==`, `!=`
-- **🧠 Logical Operators**: `&&` (AND), `||` (OR) with proper precedence
-- **🎯 Control Flow**: If-else statements, else-if chaining, while loops
-- **📝 Input/Output**: Console I/O with support for Bengali text
-- **💬 Comments**: Single-line (`//`) and multi-line (`/* */`) support
-- **🛡️ Error Handling**: Comprehensive error reporting with line numbers
-
-### 🚀 Advanced Features
-- **⚡ Flex Lexer**: Efficient tokenization with UTF-8 support
-- **🏗️ Bison Parser**: Powerful syntax analysis and parsing
-- **🔀 Expression Parser**: Unified expression parsing with operator precedence
-- **🏗️ Nested Structures**: Support for deeply nested control structures
-- **🤔 Complex Conditions**: Multi-condition expressions with logical operators
-- **🔗 String Operations**: String concatenation and manipulation
-- **🔒 Type Safety**: Runtime type checking and validation
-- **📊 Symbol Table**: Efficient variable storage and retrieval system
-
-## 🔤 Keywords and Their Meanings
-
-### Complete Keyword Mapping
-
-| Bangla Keyword | Banglish | English | Purpose | Example |
-|----------------|----------|---------|---------|---------|
-| **শুরু** | shuru | `main()` / `begin` | Program start | `শুরু` |
-| **শেষ** | shesh | `end` | Program end | `শেষ` |
-| **পূর্ণ** | purno | `int` | Integer declaration | `পূর্ণ x = 5;` |
-| **ভগ্ন** | vogno | `float` / `double` | Float declaration | `ভগ্ন pi = 3.14;` |
-| **শব্দ** | shobdo | `string` | String declaration | `শব্দ name = "হ্যালো";` |
-| **যদি** | jodi | `if` | Conditional statement | `যদি (x > 0)` |
-| **নাহলে** | nahole | `else` | Else statement | `নাহলে` |
-| **নাহলে যদি** | nahole jodi | `else if` | Else if statement | `নাহলে যদি (x == 0)` |
-| **যতক্ষণ** | jotokkhon | `while` | While loop | `যতক্ষণ (i < 10)` |
-| **দেখাও** | dekhao | `cout` / `print` | Output statement | `দেখাও << "হ্যালো";` |
-| **নাও** | nao | `cin` / `input` | Input statement | `নাও >> x;` |
-
-### Operator Precedence (Highest to Lowest)
-
-| Level | Operators | Description | Associativity |
-|-------|-----------|-------------|---------------|
-| 1 | `()` | Parentheses | Left-to-right |
-| 2 | `*`, `/` | Multiplication, Division | Left-to-right |
-| 3 | `+`, `-` | Addition, Subtraction | Left-to-right |
-| 4 | `<`, `>`, `<=`, `>=` | Relational operators | Left-to-right |
-| 5 | `==`, `!=` | Equality operators | Left-to-right |
-| 6 | `&&` | Logical AND | Left-to-right |
-
-### Data Types and Operations
-
-#### Integer (`purno`)
-```cpp
+Made with ❤️ for the Bangla programming community```cpp
 purno x = 10;                    // Declaration with initialization
 purno a = 5, b = 15, c;         // Multiple declarations
 x = a + b * 2;                  // Arithmetic operations

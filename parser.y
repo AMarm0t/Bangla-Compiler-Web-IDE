@@ -61,17 +61,20 @@ typedef enum {
     NODE_STMT_LIST,
     NODE_DECL,
     NODE_ASSIGN,
+    NODE_ARRAY_ASSIGN,
     NODE_COMPOUND_ASSIGN,
     NODE_INC_DEC,
     NODE_INPUT,
     NODE_OUTPUT,
     NODE_IF,
     NODE_WHILE,
+    NODE_FOR,
     NODE_EXPR,
     NODE_BINARY_OP,
     NODE_UNARY_OP,
     NODE_LITERAL,
     NODE_IDENTIFIER,
+    NODE_ARRAY_ACCESS,
     NODE_STRING_CONCAT,
     NODE_OUTPUT_ITEM
 } NodeType;
@@ -100,9 +103,10 @@ typedef struct ASTNode {
         } stmt_list;
         
         struct {
-            int varType; /* 0=int, 1=float, 2=string */
+            int varType; /* 0=int, 1=float, 2=string, 3=char */
             char **names;
             struct ASTNode **init_values;
+            int *array_sizes; /* NULL for non-arrays, size for arrays */
             int count;
         } decl;
         
@@ -110,6 +114,12 @@ typedef struct ASTNode {
             char *name;
             struct ASTNode *value;
         } assign;
+        
+        struct {
+            char *name;
+            struct ASTNode *index;
+            struct ASTNode *value;
+        } array_assign;
         
         struct {
             OpType op;
@@ -124,6 +134,7 @@ typedef struct ASTNode {
         
         struct {
             char **names;
+            struct ASTNode **indices;  /* NULL for regular vars, index expr for arrays */
             int count;
         } input;
         
@@ -142,6 +153,13 @@ typedef struct ASTNode {
             struct ASTNode *condition;
             struct ASTNode *body;
         } while_stmt;
+        
+        struct {
+            struct ASTNode *init;
+            struct ASTNode *condition;
+            struct ASTNode *increment;
+            struct ASTNode *body;
+        } for_stmt;
         
         struct {
             OpType op;
@@ -167,6 +185,11 @@ typedef struct ASTNode {
         } identifier;
         
         struct {
+            char *name;
+            struct ASTNode *index;
+        } array_access;
+        
+        struct {
             struct ASTNode **parts;
             int count;
         } string_concat;
@@ -187,10 +210,15 @@ typedef struct ASTNode {
 typedef struct VarEntry {
     char *name;
     int type; /* 0=int, 1=float, 2=string */
+    int is_array;
+    int array_size;
     union {
         int ival;
         double fval;
         char *sval;
+        int *iarray;
+        double *farray;
+        char **sarray;
     } value;
     struct VarEntry *next;
 } VarEntry;
@@ -202,18 +230,23 @@ ASTNode* createProgramNode(ASTNode *stmts);
 ASTNode* createStmtListNode();
 void addStatement(ASTNode *list, ASTNode *stmt);
 ASTNode* createDeclNode(int varType, char **names, ASTNode **values, int count);
+ASTNode* createDeclNodeWithArrays(int varType, char **names, ASTNode **values, int *sizes, int count);
+ASTNode* createArrayDeclNode(int varType, char **names, int *sizes, int count);
 ASTNode* createAssignNode(char *name, ASTNode *value);
+ASTNode* createArrayAssignNode(char *name, ASTNode *index, ASTNode *value);
 ASTNode* createCompoundAssignNode(OpType op, char *name, ASTNode *value);
 ASTNode* createIncDecNode(OpType op, char *name);
-ASTNode* createInputNode(char **names, int count);
+ASTNode* createInputNode(char **names, ASTNode **indices, int count);
 ASTNode* createOutputNode(ASTNode **items, int count);
 ASTNode* createIfNode(ASTNode *cond, ASTNode *then_br, ASTNode *else_br);
 ASTNode* createWhileNode(ASTNode *cond, ASTNode *body);
+ASTNode* createForNode(ASTNode *init, ASTNode *cond, ASTNode *incr, ASTNode *body);
 ASTNode* createBinaryOpNode(OpType op, ASTNode *left, ASTNode *right);
 ASTNode* createUnaryOpNode(OpType op, ASTNode *operand);
 ASTNode* createIntLiteralNode(int value);
 ASTNode* createFloatLiteralNode(double value);
 ASTNode* createIdentifierNode(char *name);
+ASTNode* createArrayAccessNode(char *name, ASTNode *index);
 ASTNode* createStringConcatNode(ASTNode **parts, int count);
 ASTNode* createOutputItemString(char *str);
 ASTNode* createOutputItemExpr(ASTNode *expr);
@@ -229,6 +262,7 @@ char* evaluateString(ASTNode *node);
 unsigned int hash(const char *str);
 VarEntry* findVar(const char *name);
 void addVar(const char *name, int type);
+void addArrayVar(const char *name, int type, int size);
 int isDeclared(const char *name);
 double getNumericValue(const char *name);
 void setNumericValue(const char *name, double value);
@@ -249,6 +283,8 @@ ASTNode *astRoot = NULL;
     struct {
         char **names;
         struct ASTNode **values;
+        struct ASTNode **indices;
+        int *sizes;
         int count;
     } name_list;
     struct {
@@ -258,8 +294,8 @@ ASTNode *astRoot = NULL;
 }
 
 /* Token declarations */
-%token SHURU SHESH PURNO VOGNO SHOBDO JODI NAHOLE JOTOKKHON DEKHAO NAO
-%token LBRACE RBRACE LPAREN RPAREN SEMICOLON COMMA
+%token SHURU SHESH PURNO VOGNO SHOBDO JODI NAHOLE JOTOKKHON FOR DEKHAO NAO
+%token LBRACE RBRACE LPAREN RPAREN LBRACKET RBRACKET SEMICOLON COMMA
 %token INCREMENT DECREMENT PLUS_ASSIGN MINUS_ASSIGN MULT_ASSIGN DIV_ASSIGN
 %token EQ NE LE GE LT GT AND OR
 %token ASSIGN PLUS MINUS MULT DIV
@@ -271,7 +307,7 @@ ASTNode *astRoot = NULL;
 
 %type <node> program statements statement declaration assignment
 %type <node> compound_assignment increment_decrement input_statement output_statement
-%type <node> if_statement while_statement
+%type <node> if_statement while_statement for_statement
 %type <node> expression logical_or logical_and equality relational additive multiplicative primary
 %type <node> string_expression output_item
 %type <name_list> purno_list vogno_list shobdo_list input_list
@@ -312,19 +348,20 @@ statement:
     | output_statement { $$ = $1; }
     | if_statement { $$ = $1; }
     | while_statement { $$ = $1; }
+    | for_statement { $$ = $1; }
     | compound_assignment { $$ = $1; }
     | increment_decrement { $$ = $1; }
     ;
 
 declaration:
     PURNO purno_list SEMICOLON {
-        $$ = createDeclNode(0, $2.names, $2.values, $2.count);
+        $$ = createDeclNodeWithArrays(0, $2.names, $2.values, $2.sizes, $2.count);
     }
     | VOGNO vogno_list SEMICOLON {
-        $$ = createDeclNode(1, $2.names, $2.values, $2.count);
+        $$ = createDeclNodeWithArrays(1, $2.names, $2.values, $2.sizes, $2.count);
     }
     | SHOBDO shobdo_list SEMICOLON {
-        $$ = createDeclNode(2, $2.names, $2.values, $2.count);
+        $$ = createDeclNodeWithArrays(2, $2.names, $2.values, $2.sizes, $2.count);
     }
     ;
 
@@ -332,29 +369,55 @@ purno_list:
     IDENTIFIER {
         $$.names = malloc(sizeof(char*));
         $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
         $$.names[0] = $1;
         $$.values[0] = NULL;
+        $$.sizes[0] = 0; /* 0 means not an array */
+        $$.count = 1;
+    }
+    | IDENTIFIER LBRACKET INT_LITERAL RBRACKET {
+        $$.names = malloc(sizeof(char*));
+        $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
+        $$.names[0] = $1;
+        $$.values[0] = NULL;
+        $$.sizes[0] = $3; /* array size */
         $$.count = 1;
     }
     | IDENTIFIER ASSIGN expression {
         $$.names = malloc(sizeof(char*));
         $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
         $$.names[0] = $1;
         $$.values[0] = $3;
+        $$.sizes[0] = 0;
         $$.count = 1;
     }
     | purno_list COMMA IDENTIFIER {
         $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
         $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
         $$.names[$1.count] = $3;
         $$.values[$1.count] = NULL;
+        $$.sizes[$1.count] = 0;
+        $$.count = $1.count + 1;
+    }
+    | purno_list COMMA IDENTIFIER LBRACKET INT_LITERAL RBRACKET {
+        $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
+        $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
+        $$.names[$1.count] = $3;
+        $$.values[$1.count] = NULL;
+        $$.sizes[$1.count] = $5;
         $$.count = $1.count + 1;
     }
     | purno_list COMMA IDENTIFIER ASSIGN expression {
         $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
         $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
         $$.names[$1.count] = $3;
         $$.values[$1.count] = $5;
+        $$.sizes[$1.count] = 0;
         $$.count = $1.count + 1;
     }
     ;
@@ -363,29 +426,55 @@ vogno_list:
     IDENTIFIER {
         $$.names = malloc(sizeof(char*));
         $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
         $$.names[0] = $1;
         $$.values[0] = NULL;
+        $$.sizes[0] = 0;
+        $$.count = 1;
+    }
+    | IDENTIFIER LBRACKET INT_LITERAL RBRACKET {
+        $$.names = malloc(sizeof(char*));
+        $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
+        $$.names[0] = $1;
+        $$.values[0] = NULL;
+        $$.sizes[0] = $3;
         $$.count = 1;
     }
     | IDENTIFIER ASSIGN expression {
         $$.names = malloc(sizeof(char*));
         $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
         $$.names[0] = $1;
         $$.values[0] = $3;
+        $$.sizes[0] = 0;
         $$.count = 1;
     }
     | vogno_list COMMA IDENTIFIER {
         $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
         $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
         $$.names[$1.count] = $3;
         $$.values[$1.count] = NULL;
+        $$.sizes[$1.count] = 0;
+        $$.count = $1.count + 1;
+    }
+    | vogno_list COMMA IDENTIFIER LBRACKET INT_LITERAL RBRACKET {
+        $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
+        $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
+        $$.names[$1.count] = $3;
+        $$.values[$1.count] = NULL;
+        $$.sizes[$1.count] = $5;
         $$.count = $1.count + 1;
     }
     | vogno_list COMMA IDENTIFIER ASSIGN expression {
         $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
         $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
         $$.names[$1.count] = $3;
         $$.values[$1.count] = $5;
+        $$.sizes[$1.count] = 0;
         $$.count = $1.count + 1;
     }
     ;
@@ -394,32 +483,60 @@ shobdo_list:
     IDENTIFIER {
         $$.names = malloc(sizeof(char*));
         $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
         $$.names[0] = $1;
         $$.values[0] = NULL;
+        $$.sizes[0] = 0;
+        $$.count = 1;
+    }
+    | IDENTIFIER LBRACKET INT_LITERAL RBRACKET {
+        $$.names = malloc(sizeof(char*));
+        $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
+        $$.names[0] = $1;
+        $$.values[0] = NULL;
+        $$.sizes[0] = $3;
         $$.count = 1;
     }
     | IDENTIFIER ASSIGN string_expression {
         $$.names = malloc(sizeof(char*));
         $$.values = malloc(sizeof(ASTNode*));
+        $$.sizes = malloc(sizeof(int));
         $$.names[0] = $1;
         $$.values[0] = $3;
+        $$.sizes[0] = 0;
         $$.count = 1;
     }
     | shobdo_list COMMA IDENTIFIER {
         $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
         $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
         $$.names[$1.count] = $3;
         $$.values[$1.count] = NULL;
+        $$.sizes[$1.count] = 0;
+        $$.count = $1.count + 1;
+    }
+    | shobdo_list COMMA IDENTIFIER LBRACKET INT_LITERAL RBRACKET {
+        $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
+        $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
+        $$.names[$1.count] = $3;
+        $$.values[$1.count] = NULL;
+        $$.sizes[$1.count] = $5;
         $$.count = $1.count + 1;
     }
     | shobdo_list COMMA IDENTIFIER ASSIGN string_expression {
         $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
         $$.values = realloc($1.values, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = realloc($1.sizes, sizeof(int) * ($1.count + 1));
         $$.names[$1.count] = $3;
         $$.values[$1.count] = $5;
+        $$.sizes[$1.count] = 0;
         $$.count = $1.count + 1;
     }
     ;
+
+
 
 assignment:
     IDENTIFIER ASSIGN expression SEMICOLON {
@@ -427,6 +544,12 @@ assignment:
     }
     | IDENTIFIER ASSIGN string_expression SEMICOLON {
         $$ = createAssignNode($1, $3);
+    }
+    | IDENTIFIER LBRACKET expression RBRACKET ASSIGN expression SEMICOLON {
+        $$ = createArrayAssignNode($1, $3, $6);
+    }
+    | IDENTIFIER LBRACKET expression RBRACKET ASSIGN string_expression SEMICOLON {
+        $$ = createArrayAssignNode($1, $3, $6);
     }
     ;
 
@@ -459,19 +582,45 @@ increment_decrement:
 
 input_statement:
     NAO input_list SEMICOLON {
-        $$ = createInputNode($2.names, $2.count);
+        $$ = createInputNode($2.names, $2.indices, $2.count);
     }
     ;
 
 input_list:
     RIGHT_SHIFT IDENTIFIER {
         $$.names = malloc(sizeof(char*));
+        $$.indices = malloc(sizeof(ASTNode*));
+        $$.sizes = NULL;
+        $$.values = NULL;
         $$.names[0] = $2;
+        $$.indices[0] = NULL;  /* Regular variable */
+        $$.count = 1;
+    }
+    | RIGHT_SHIFT IDENTIFIER LBRACKET expression RBRACKET {
+        $$.names = malloc(sizeof(char*));
+        $$.indices = malloc(sizeof(ASTNode*));
+        $$.sizes = NULL;
+        $$.values = NULL;
+        $$.names[0] = $2;
+        $$.indices[0] = $4;  /* Array access */
         $$.count = 1;
     }
     | input_list RIGHT_SHIFT IDENTIFIER {
         $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
+        $$.indices = realloc($1.indices, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = NULL;
+        $$.values = NULL;
         $$.names[$1.count] = $3;
+        $$.indices[$1.count] = NULL;  /* Regular variable */
+        $$.count = $1.count + 1;
+    }
+    | input_list RIGHT_SHIFT IDENTIFIER LBRACKET expression RBRACKET {
+        $$.names = realloc($1.names, sizeof(char*) * ($1.count + 1));
+        $$.indices = realloc($1.indices, sizeof(ASTNode*) * ($1.count + 1));
+        $$.sizes = NULL;
+        $$.values = NULL;
+        $$.names[$1.count] = $3;
+        $$.indices[$1.count] = $5;  /* Array access */
         $$.count = $1.count + 1;
     }
     ;
@@ -522,6 +671,12 @@ if_statement:
 while_statement:
     JOTOKKHON LPAREN expression RPAREN LBRACE statements RBRACE {
         $$ = createWhileNode($3, $6);
+    }
+    ;
+
+for_statement:
+    FOR LPAREN statement expression SEMICOLON statement RPAREN LBRACE statements RBRACE {
+        $$ = createForNode($3, $4, $6, $9);
     }
     ;
 
@@ -599,6 +754,9 @@ primary:
     | IDENTIFIER {
         $$ = createIdentifierNode($1);
     }
+    | IDENTIFIER LBRACKET expression RBRACKET {
+        $$ = createArrayAccessNode($1, $3);
+    }
     | LPAREN expression RPAREN {
         $$ = $2;
     }
@@ -675,6 +833,18 @@ ASTNode* createDeclNode(int varType, char **names, ASTNode **values, int count) 
     node->data.decl.varType = varType;
     node->data.decl.names = names;
     node->data.decl.init_values = values;
+    node->data.decl.array_sizes = NULL;
+    node->data.decl.count = count;
+    return node;
+}
+
+ASTNode* createDeclNodeWithArrays(int varType, char **names, ASTNode **values, int *sizes, int count) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_DECL;
+    node->data.decl.varType = varType;
+    node->data.decl.names = names;
+    node->data.decl.init_values = values;
+    node->data.decl.array_sizes = sizes;
     node->data.decl.count = count;
     return node;
 }
@@ -684,6 +854,15 @@ ASTNode* createAssignNode(char *name, ASTNode *value) {
     node->type = NODE_ASSIGN;
     node->data.assign.name = name;
     node->data.assign.value = value;
+    return node;
+}
+
+ASTNode* createArrayAssignNode(char *name, ASTNode *index, ASTNode *value) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_ARRAY_ASSIGN;
+    node->data.array_assign.name = name;
+    node->data.array_assign.index = index;
+    node->data.array_assign.value = value;
     return node;
 }
 
@@ -704,10 +883,11 @@ ASTNode* createIncDecNode(OpType op, char *name) {
     return node;
 }
 
-ASTNode* createInputNode(char **names, int count) {
+ASTNode* createInputNode(char **names, ASTNode **indices, int count) {
     ASTNode *node = malloc(sizeof(ASTNode));
     node->type = NODE_INPUT;
     node->data.input.names = names;
+    node->data.input.indices = indices;
     node->data.input.count = count;
     return node;
 }
@@ -734,6 +914,16 @@ ASTNode* createWhileNode(ASTNode *cond, ASTNode *body) {
     node->type = NODE_WHILE;
     node->data.while_stmt.condition = cond;
     node->data.while_stmt.body = body;
+    return node;
+}
+
+ASTNode* createForNode(ASTNode *init, ASTNode *cond, ASTNode *incr, ASTNode *body) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_FOR;
+    node->data.for_stmt.init = init;
+    node->data.for_stmt.condition = cond;
+    node->data.for_stmt.increment = incr;
+    node->data.for_stmt.body = body;
     return node;
 }
 
@@ -774,6 +964,14 @@ ASTNode* createIdentifierNode(char *name) {
     ASTNode *node = malloc(sizeof(ASTNode));
     node->type = NODE_IDENTIFIER;
     node->data.identifier.name = name;
+    return node;
+}
+
+ASTNode* createArrayAccessNode(char *name, ASTNode *index) {
+    ASTNode *node = malloc(sizeof(ASTNode));
+    node->type = NODE_ARRAY_ACCESS;
+    node->data.array_access.name = name;
+    node->data.array_access.index = index;
     return node;
 }
 
@@ -832,17 +1030,24 @@ void executeStatement(ASTNode *node) {
                 if (isDeclared(node->data.decl.names[i])) {
                     fprintf(stderr, "Error: Redeclaration of variable '%s'\n", node->data.decl.names[i]);
                 } else {
-                    addVar(node->data.decl.names[i], node->data.decl.varType);
-                    if (node->data.decl.init_values[i]) {
-                        if (node->data.decl.varType == 2) {
-                            /* String type */
-                            strval = evaluateString(node->data.decl.init_values[i]);
-                            setStringValue(node->data.decl.names[i], strval);
-                            free(strval);
-                        } else {
-                            /* Numeric type */
-                            val = evaluateExpr(node->data.decl.init_values[i]);
-                            setNumericValue(node->data.decl.names[i], val);
+                    int array_size = (node->data.decl.array_sizes) ? node->data.decl.array_sizes[i] : 0;
+                    if (array_size > 0) {
+                        /* Array declaration */
+                        addArrayVar(node->data.decl.names[i], node->data.decl.varType, array_size);
+                    } else {
+                        /* Regular variable */
+                        addVar(node->data.decl.names[i], node->data.decl.varType);
+                        if (node->data.decl.init_values[i]) {
+                            if (node->data.decl.varType == 2) {
+                                /* String type */
+                                strval = evaluateString(node->data.decl.init_values[i]);
+                                setStringValue(node->data.decl.names[i], strval);
+                                free(strval);
+                            } else {
+                                /* Numeric type (int or float) */
+                                val = evaluateExpr(node->data.decl.init_values[i]);
+                                setNumericValue(node->data.decl.names[i], val);
+                            }
                         }
                     }
                 }
@@ -861,6 +1066,39 @@ void executeStatement(ASTNode *node) {
                 } else {
                     val = evaluateExpr(node->data.assign.value);
                     setNumericValue(node->data.assign.name, val);
+                }
+            }
+            break;
+            
+        case NODE_ARRAY_ASSIGN:
+            if (!isDeclared(node->data.array_assign.name)) {
+                fprintf(stderr, "Error: Undeclared variable '%s'\n", node->data.array_assign.name);
+            } else {
+                var = findVar(node->data.array_assign.name);
+                if (!var->is_array) {
+                    fprintf(stderr, "Error: '%s' is not an array\n", node->data.array_assign.name);
+                } else {
+                    int idx = (int)evaluateExpr(node->data.array_assign.index);
+                    if (idx < 0 || idx >= var->array_size) {
+                        fprintf(stderr, "Error: Array index out of bounds\n");
+                    } else {
+                        if (var->type == 2) {
+                            /* String array */
+                            strval = evaluateString(node->data.array_assign.value);
+                            if (var->value.sarray[idx]) {
+                                free(var->value.sarray[idx]);
+                            }
+                            var->value.sarray[idx] = strdup(strval);
+                            free(strval);
+                        } else {
+                            val = evaluateExpr(node->data.array_assign.value);
+                            if (var->type == 0) {
+                                var->value.iarray[idx] = (int)val;
+                            } else if (var->type == 1) {
+                                var->value.farray[idx] = val;
+                            }
+                        }
+                    }
                 }
             }
             break;
@@ -911,27 +1149,67 @@ void executeStatement(ASTNode *node) {
             
         case NODE_INPUT:
             for (i = 0; i < node->data.input.count; i++) {
-                if (!isDeclared(node->data.input.names[i])) {
-                    fprintf(stderr, "Error: Undeclared variable '%s'\n", node->data.input.names[i]);
-                } else {
-                    var = findVar(node->data.input.names[i]);
-                    if (var->type == 0) {
-                        char input_buffer[1000];
-                        scanf("%s", input_buffer);
-                        char* converted = convert_bangla_input(input_buffer);
-                        var->value.ival = atoi(converted);
-                        free(converted);
-                    } else if (var->type == 1) {
-                        char input_buffer[1000];
-                        scanf("%s", input_buffer);
-                        char* converted = convert_bangla_input(input_buffer);
-                        var->value.fval = atof(converted);
-                        free(converted);
+                char *varname = node->data.input.names[i];
+                ASTNode *index_expr = node->data.input.indices[i];
+                
+                if (index_expr == NULL) {
+                    /* Regular variable input */
+                    if (!isDeclared(varname)) {
+                        fprintf(stderr, "Error: Undeclared variable '%s'\n", varname);
                     } else {
-                        char buffer[1000];
-                        scanf("%s", buffer);
-                        free(var->value.sval);
-                        var->value.sval = strdup(buffer);
+                        var = findVar(varname);
+                        if (var->type == 0) {
+                            char input_buffer[1000];
+                            scanf("%s", input_buffer);
+                            char* converted = convert_bangla_input(input_buffer);
+                            var->value.ival = atoi(converted);
+                            free(converted);
+                        } else if (var->type == 1) {
+                            char input_buffer[1000];
+                            scanf("%s", input_buffer);
+                            char* converted = convert_bangla_input(input_buffer);
+                            var->value.fval = atof(converted);
+                            free(converted);
+                        } else {
+                            char buffer[1000];
+                            scanf("%s", buffer);
+                            free(var->value.sval);
+                            var->value.sval = strdup(buffer);
+                        }
+                    }
+                } else {
+                    /* Array element input */
+                    if (!isDeclared(varname)) {
+                        fprintf(stderr, "Error: Undeclared array '%s'\n", varname);
+                    } else {
+                        var = findVar(varname);
+                        if (!var->is_array) {
+                            fprintf(stderr, "Error: '%s' is not an array\n", varname);
+                        } else {
+                            int idx = (int)evaluateExpr(index_expr);
+                            if (idx < 0 || idx >= var->array_size) {
+                                fprintf(stderr, "Error: Array index %d out of bounds\n", idx);
+                            } else {
+                                if (var->type == 0) {
+                                    char input_buffer[1000];
+                                    scanf("%s", input_buffer);
+                                    char* converted = convert_bangla_input(input_buffer);
+                                    var->value.iarray[idx] = atoi(converted);
+                                    free(converted);
+                                } else if (var->type == 1) {
+                                    char input_buffer[1000];
+                                    scanf("%s", input_buffer);
+                                    char* converted = convert_bangla_input(input_buffer);
+                                    var->value.farray[idx] = atof(converted);
+                                    free(converted);
+                                } else if (var->type == 2) {
+                                    char buffer[1000];
+                                    scanf("%s", buffer);
+                                    if (var->value.sarray[idx]) free(var->value.sarray[idx]);
+                                    var->value.sarray[idx] = strdup(buffer);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -945,8 +1223,11 @@ void executeStatement(ASTNode *node) {
                         char *str = item->data.output_item.value.str;
                         size_t len = strlen(str);
                         if (len >= 2) {
-                            str[len-1] = '\0';
-                            processEscapeSequences(str + 1);
+                            /* Create a copy to avoid modifying the original string */
+                            char *str_copy = strdup(str);
+                            str_copy[len-1] = '\0';
+                            processEscapeSequences(str_copy + 1);
+                            free(str_copy);
                         }
                     } else {
                         ASTNode *expr = item->data.output_item.value.expr;
@@ -962,6 +1243,25 @@ void executeStatement(ASTNode *node) {
                                     print_bangla_float(var->value.fval);
                                 } else {
                                     printf("%s", var->value.sval);
+                                }
+                            }
+                        } else if (expr->type == NODE_ARRAY_ACCESS) {
+                            /* Check array type for proper output */
+                            if (isDeclared(expr->data.array_access.name)) {
+                                var = findVar(expr->data.array_access.name);
+                                if (var->is_array) {
+                                    int idx = (int)evaluateExpr(expr->data.array_access.index);
+                                    if (idx >= 0 && idx < var->array_size) {
+                                        if (var->type == 2) {
+                                            /* String array - print as string */
+                                            printf("%s", var->value.sarray[idx]);
+                                        } else {
+                                            /* Numeric array - print as number */
+                                            print_bangla_float(evaluateExpr(expr));
+                                        }
+                                    }
+                                } else {
+                                    print_bangla_float(evaluateExpr(expr));
                                 }
                             }
                         } else {
@@ -993,6 +1293,14 @@ void executeStatement(ASTNode *node) {
             }
             break;
             
+        case NODE_FOR:
+            executeStatement(node->data.for_stmt.init);
+            while (evaluateExpr(node->data.for_stmt.condition)) {
+                executeStmtList(node->data.for_stmt.body);
+                executeStatement(node->data.for_stmt.increment);
+            }
+            break;
+            
         default:
             break;
     }
@@ -1015,6 +1323,29 @@ double evaluateExpr(ASTNode *node) {
                 return 0.0;
             }
             return getNumericValue(node->data.identifier.name);
+            
+        case NODE_ARRAY_ACCESS: {
+            if (!isDeclared(node->data.array_access.name)) {
+                fprintf(stderr, "Error: Undeclared variable '%s'\n", node->data.array_access.name);
+                return 0.0;
+            }
+            VarEntry *arr_var = findVar(node->data.array_access.name);
+            if (!arr_var->is_array) {
+                fprintf(stderr, "Error: '%s' is not an array\n", node->data.array_access.name);
+                return 0.0;
+            }
+            int idx = (int)evaluateExpr(node->data.array_access.index);
+            if (idx < 0 || idx >= arr_var->array_size) {
+                fprintf(stderr, "Error: Array index out of bounds\n");
+                return 0.0;
+            }
+            if (arr_var->type == 0) {
+                return (double)arr_var->value.iarray[idx];
+            } else if (arr_var->type == 1) {
+                return arr_var->value.farray[idx];
+            }
+            return 0.0;
+        }
             
         case NODE_BINARY_OP:
             left = evaluateExpr(node->data.binary_op.left);
@@ -1140,13 +1471,39 @@ void addVar(const char *name, int type) {
     VarEntry *entry = (VarEntry*)malloc(sizeof(VarEntry));
     entry->name = strdup(name);
     entry->type = type;
+    entry->is_array = 0;
+    entry->array_size = 0;
     
     if (type == 0) {
         entry->value.ival = 0;
     } else if (type == 1) {
         entry->value.fval = 0.0;
-    } else {
+    } else if (type == 2) {
         entry->value.sval = strdup("");
+    }
+    
+    entry->next = symbolTable[idx];
+    symbolTable[idx] = entry;
+}
+
+void addArrayVar(const char *name, int type, int size) {
+    unsigned int idx = hash(name);
+    VarEntry *entry = (VarEntry*)malloc(sizeof(VarEntry));
+    entry->name = strdup(name);
+    entry->type = type;
+    entry->is_array = 1;
+    entry->array_size = size;
+    
+    if (type == 0) {
+        entry->value.iarray = (int*)calloc(size, sizeof(int));
+    } else if (type == 1) {
+        entry->value.farray = (double*)calloc(size, sizeof(double));
+    } else if (type == 2) {
+        entry->value.sarray = (char**)calloc(size, sizeof(char*));
+        int i;
+        for (i = 0; i < size; i++) {
+            entry->value.sarray[i] = strdup("");
+        }
     }
     
     entry->next = symbolTable[idx];

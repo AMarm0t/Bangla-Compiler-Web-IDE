@@ -28,13 +28,45 @@ char* bangla_to_english_digits(const char* str) {
 %}
 
 %option noyywrap
+%option 8bit
 
-/* Regular expressions - Using actual Bangla characters */
-BANGLA_DIGIT    [০-৯]
-DIGIT           [0-9]
-ALL_DIGIT       [0-9০-৯]
-LETTER          [a-zA-Z_\x80-\xFF]
-ALPHANUM        [a-zA-Z0-9_\x80-\xFF০-৯]
+/* 
+ * UTF-8 aware patterns for Bangla/Bengali text
+ * 
+ * Bengali Unicode block: U+0980–U+09FF
+ * In UTF-8 encoding: 0xE0 0xA6 0x80 to 0xE0 0xA7 0xBF
+ * 
+ * Bengali characters are 3-byte UTF-8 sequences:
+ * - First byte:  0xE0
+ * - Second byte: 0xA6 or 0xA7
+ * - Third byte:  0x80-0xBF
+ */
+
+/* Match any 2-byte UTF-8 sequence (for completeness) */
+UTF8_2BYTE      [\xC0-\xDF][\x80-\xBF]
+
+/* Match Bengali/Bangla UTF-8 characters specifically */
+BENGALI_CHAR    \xE0[\xA6-\xA7][\x80-\xBF]
+
+/* Match any 3-byte UTF-8 sequence (broader, includes Bengali) */
+UTF8_3BYTE      \xE0[\x80-\xBF][\x80-\xBF]|\xE1[\x80-\xBF][\x80-\xBF]|\xE2[\x80-\xBF][\x80-\xBF]|\xE3[\x80-\xBF][\x80-\xBF]|\xE4[\x80-\xBF][\x80-\xBF]|\xE5[\x80-\xBF][\x80-\xBF]|\xE6[\x80-\xBF][\x80-\xBF]|\xE7[\x80-\xBF][\x80-\xBF]|\xE8[\x80-\xBF][\x80-\xBF]|\xE9[\x80-\xBF][\x80-\xBF]|\xEA[\x80-\xBF][\x80-\xBF]|\xEB[\x80-\xBF][\x80-\xBF]|\xEC[\x80-\xBF][\x80-\xBF]|\xED[\x80-\xBF][\x80-\xBF]|\xEE[\x80-\xBF][\x80-\xBF]|\xEF[\x80-\xBF][\x80-\xBF]
+
+/* Match any 4-byte UTF-8 sequence (emoji, etc.) */
+UTF8_4BYTE      [\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF]
+
+/* Any UTF-8 multibyte character */
+UTF8_CHAR       {UTF8_2BYTE}|{UTF8_3BYTE}|{UTF8_4BYTE}
+
+/* Bangla digits ০-৯ are in the Bengali block */
+BANGLA_DIGIT    \xE0\xA7[\xA6-\xAF]
+
+/* ASCII components */
+ASCII_LETTER    [a-zA-Z_]
+ASCII_DIGIT     [0-9]
+
+/* Identifier components: ASCII or UTF-8 (Bengali) letters/digits */
+IDENT_START     {ASCII_LETTER}|{UTF8_CHAR}
+IDENT_CONT      {ASCII_LETTER}|{ASCII_DIGIT}|{UTF8_CHAR}|{BANGLA_DIGIT}
 
 %%
 
@@ -51,6 +83,7 @@ ALPHANUM        [a-zA-Z0-9_\x80-\xFF০-৯]
 "যদি"                   { return JODI; }
 "নাহলে"                 { return NAHOLE; }
 "যতক্ষণ"                { return JOTOKKHON; }
+"ফোর"                   { return FOR; }
 "দেখাও"                 { return DEKHAO; }
 "নাও"                   { return NAO; }
 "নতুনলাইন"             { yylval.str = strdup("\"\n\""); return STRING_LITERAL; }
@@ -83,6 +116,8 @@ ALPHANUM        [a-zA-Z0-9_\x80-\xFF০-৯]
 "}"                     { return RBRACE; }
 "("                     { return LPAREN; }
 ")"                     { return RPAREN; }
+"["                     { return LBRACKET; }
+"]"                     { return RBRACKET; }
 ";"                     { return SEMICOLON; }
 ","                     { return COMMA; }
 
@@ -92,22 +127,22 @@ ALPHANUM        [a-zA-Z0-9_\x80-\xFF০-৯]
                           return STRING_LITERAL; 
                         }
 
-    /* Numbers */
-{ALL_DIGIT}+"."{ALL_DIGIT}+     { 
+    /* Numbers - supporting both ASCII and Bangla digits */
+({ASCII_DIGIT}|{BANGLA_DIGIT})+"."({ASCII_DIGIT}|{BANGLA_DIGIT})+     { 
                           char* converted = bangla_to_english_digits(yytext);
                           yylval.fval = atof(converted);
                           free(converted);
                           return FLOAT_LITERAL; 
                         }
-{ALL_DIGIT}+                { 
+({ASCII_DIGIT}|{BANGLA_DIGIT})+    { 
                           char* converted = bangla_to_english_digits(yytext);
                           yylval.ival = atoi(converted);
                           free(converted);
                           return INT_LITERAL; 
                         }
 
-    /* Identifiers */
-{LETTER}{ALPHANUM}*     { 
+    /* Identifiers - UTF-8 aware, supports Bengali variable names */
+{IDENT_START}{IDENT_CONT}* { 
                           yylval.str = strdup(yytext); 
                           return IDENTIFIER; 
                         }
