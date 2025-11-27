@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Mobile Tabs -->
+    <!-- Mobile Tabs (will be positioned at bottom on mobile) -->
     <div class="mobile-tabs">
         <div class="tab-buttons">
             <button class="tab-btn active" data-tab="code">
@@ -19,24 +19,39 @@
         </div>
     </div>
 
+    <!-- Mobile Top Actions (Run / Examples / Clear) -->
+    <div class="mobile-top-actions" aria-hidden="true">
+        <button class="btn btn-primary" id="runBtnTop">
+            <span class="icon">▶</span> Run
+        </button>
+        <button class="btn btn-secondary" id="examplesBtnTop">
+            <span class="icon">📚</span> Examples
+        </button>
+        <button class="btn btn-secondary" id="clearBtnTop">
+            <span class="icon">🗑</span> Clear
+        </button>
+    </div>
+
     <div class="container">
         <!-- Left Panel - Code Editor -->
         <div class="editor-panel active" id="editorPanel">
-            <div class="panel-header">
-                <div class="header-left">
-                    <span class="icon">📄</span>
-                    <span class="title">Code Editor</span>
-                </div>
-                <div class="header-right">
-                    <button class="btn btn-primary" id="runBtn">
-                        <span class="icon">▶</span> Run Code
-                    </button>
-                    <button class="btn btn-secondary" id="examplesBtn">
-                        <span class="icon">📚</span> Examples
-                    </button>
-                    <button class="btn btn-secondary" id="clearBtn">
-                        <span class="icon">🗑</span> Clear
-                    </button>
+            <div class="mobile-header-wrapper">
+                <div class="panel-header" id="codeHeader">
+                    <div class="header-left">
+                        <span class="icon">📄</span>
+                        <span class="title">Code Editor</span>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-primary" id="runBtn">
+                            <span class="icon">▶</span> Run
+                        </button>
+                        <button class="btn btn-secondary" id="examplesBtn">
+                            <span class="icon">📚</span> Examples
+                        </button>
+                        <button class="btn btn-secondary" id="clearBtn">
+                            <span class="icon">🗑</span> Clear
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="editor-content">
@@ -110,6 +125,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Examples Modal -->
     <div class="modal" id="examplesModal">

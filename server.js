@@ -93,13 +93,14 @@ app.get('/api/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`
 ╔════════════════════════════════════════════╗
 ║   Bangla Compiler - Web IDE Server        ║
 ╚════════════════════════════════════════════╝
 
 🚀 Server running at: http://localhost:${PORT}
+📱 Mobile access: http://192.168.0.104:${PORT}
 📝 Open your browser and navigate to the URL above
 
 Press Ctrl+C to stop the server

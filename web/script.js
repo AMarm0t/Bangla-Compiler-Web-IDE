@@ -4,8 +4,14 @@ const inputArea = document.getElementById('inputArea');
 const outputArea = document.getElementById('outputArea');
 const runBtn = document.getElementById('runBtn');
 const runBtnMobile = document.getElementById('runBtnMobile');
+const runBtnBottom = document.getElementById('runBtnBottom');
+const runBtnTop = document.getElementById('runBtnTop');
 const examplesBtn = document.getElementById('examplesBtn');
+const examplesBtnBottom = document.getElementById('examplesBtnBottom');
+const examplesBtnTop = document.getElementById('examplesBtnTop');
 const clearBtn = document.getElementById('clearBtn');
+const clearBtnBottom = document.getElementById('clearBtnBottom');
+const clearBtnTop = document.getElementById('clearBtnTop');
 const clearInputBtn = document.getElementById('clearInputBtn');
 const clearOutputBtn = document.getElementById('clearOutputBtn');
 const examplesModal = document.getElementById('examplesModal');
@@ -158,48 +164,8 @@ document.addEventListener('mouseup', () => {
     }
 });
 
-// Run Code
-runBtn.addEventListener('click', async () => {
-    const code = codeEditor.value;
-    const input = inputArea.value;
-    
-    if (!code.trim()) {
-        outputArea.textContent = 'Error: No code to run!';
-        outputArea.className = 'output-error';
-        return;
-    }
-    
-    loadingOverlay.classList.add('active');
-    outputArea.textContent = '';
-    
-    try {
-        const response = await fetch('/api/run', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ code, input })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            outputArea.textContent = result.output || '(No output)';
-            outputArea.className = '';
-        } else {
-            outputArea.textContent = result.error || 'Unknown error occurred';
-            outputArea.className = 'output-error';
-        }
-    } catch (error) {
-        outputArea.textContent = 'Error: Failed to connect to server\n' + error.message;
-        outputArea.className = 'output-error';
-    } finally {
-        loadingOverlay.classList.remove('active');
-    }
-});
-
-// Mobile Run Button (same functionality)
-runBtnMobile.addEventListener('click', async () => {
+// Run Code (shared)
+async function runCode() {
     const code = codeEditor.value;
     const input = inputArea.value;
     
@@ -236,12 +202,21 @@ runBtnMobile.addEventListener('click', async () => {
     } finally {
         loadingOverlay.classList.remove('active');
     }
-});
+}
+
+// Hook buttons
+runBtn.addEventListener('click', runCode);
+if (runBtnMobile) runBtnMobile.addEventListener('click', runCode);
+if (runBtnBottom) runBtnBottom.addEventListener('click', runCode);
+if (runBtnTop) runBtnTop.addEventListener('click', runCode);
 
 // Clear Buttons
-clearBtn.addEventListener('click', () => {
+function clearCode() {
     codeEditor.value = '';
-});
+}
+clearBtn.addEventListener('click', clearCode);
+if (clearBtnBottom) clearBtnBottom.addEventListener('click', clearCode);
+if (clearBtnTop) clearBtnTop.addEventListener('click', clearCode);
 
 clearInputBtn.addEventListener('click', () => {
     inputArea.value = '';
@@ -253,9 +228,12 @@ clearOutputBtn.addEventListener('click', () => {
 });
 
 // Examples Modal
-examplesBtn.addEventListener('click', () => {
+function openExamples() {
     examplesModal.classList.add('active');
-});
+}
+examplesBtn.addEventListener('click', openExamples);
+if (examplesBtnBottom) examplesBtnBottom.addEventListener('click', openExamples);
+if (examplesBtnTop) examplesBtnTop.addEventListener('click', openExamples);
 
 closeModal.addEventListener('click', () => {
     examplesModal.classList.remove('active');
