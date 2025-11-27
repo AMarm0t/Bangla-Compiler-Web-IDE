@@ -200,36 +200,22 @@ body {
     transition: background 0.2s;
 }
 
-    
-        /* Mobile Bottom Action Bar */
-        .mobile-action-bar {
-            display: flex;
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            gap: 8px;
-            padding: 8px 12px;
-            background: #2d2d30;
-            border-top: 1px solid #3e3e42;
-            z-index: 120;
-            justify-content: space-between;
-        }
-        .mobile-action-bar .btn {
-            flex: 1;
-            justify-content: center;
-        }
 .resize-handle-vertical:hover {
     background: #007acc;
 }
 
 .resize-handle-vertical.resizing {
-            padding-bottom: 56px; /* space for bottom action bar */
-            overflow: hidden;
+    background: #007acc;
 }
 
-        /* Hide top run header to avoid redundancy; we use bottom bar */
-        .mobile-run-header { display: none; }
+/* Output Section */
+.output-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 100px;
+    overflow: hidden;
+}
 
 .output-section .panel-header {
     background: #2d2d30;
@@ -237,10 +223,10 @@ body {
 
 .output-content {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     background: #1e1e1e;
-    display: flex;
-    flex-direction: column;
+    -webkit-overflow-scrolling: touch;
 }
 
 #outputArea {
