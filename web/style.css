@@ -510,12 +510,7 @@ body {
     }
 
     .mobile-run-header {
-        display: block;
-        flex-shrink: 0;
-        background: #2d2d30;
-        border-bottom: 1px solid #3e3e42;
-        position: relative;
-        z-index: 50;
+        display: none; /* Hidden - not needed anymore */
     }
 
     .editor-panel,
@@ -604,6 +599,7 @@ body {
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        padding-bottom: 60px; /* space for bottom tabs */
     }
 
     .panel-header {
